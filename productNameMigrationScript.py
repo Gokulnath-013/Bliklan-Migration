@@ -96,6 +96,9 @@ def processInBatches(collection, sku_field, sku_to_name_map, batch_size):
     matching_product_name = 0
     skus_without_source_data = set()
 
+    # Determine the correct field name based on collection
+    product_name_field = "PRODUCT_NAME" if collection.name == "CAMPAIGN_PRODUCT_DATA" else "productName"
+
     print(f"\n📁 Processing collection: {collection.name}")
     
     cursor = collection.find({})
@@ -113,9 +116,9 @@ def processInBatches(collection, sku_field, sku_to_name_map, batch_size):
             continue
 
         should_update = False
-        current_name = doc.get("productName")
+        current_name = doc.get(product_name_field)
         
-        if "productName" not in doc:
+        if product_name_field not in doc:
             missing_product_name += 1
             should_update = True
         elif current_name != new_name:
@@ -129,7 +132,7 @@ def processInBatches(collection, sku_field, sku_to_name_map, batch_size):
                     "_id": doc["_id"],
                     sku_field: sku
                 },
-                {"$set": {"productName": new_name}},
+                {"$set": {product_name_field: new_name}},
                 upsert=False
             )
             updates.append(update_op)
